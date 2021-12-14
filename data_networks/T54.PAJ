@@ -1,0 +1,35 @@
+*Drakon network
+*Vertices 28
+1 "Dragon"	
+2 "Lancelot"	
+3 "Sharleman"	
+4 "Elsa"	
+5 "Burgomistr"	
+6 "Genrikh"	
+7 "Cat"	
+8 "Donkey"	
+9 "1st Weaver"	
+10 "2nd Weaver"	
+11 "Hat master"	
+12 "Music master"	
+13 "Blacksmith"	
+14 "1st Elsa's girlfriend"	
+15 "2nd Elsa's girlfriend"	
+16 "3rd Elsa's girlfriend"	
+17 "Sentinel"	
+18 "Garderner"	
+19 "1st citizen"	
+20 "2nd citizen"	
+21 "1st woman"	
+22 "2nd woman"	
+23 "Boy"	
+24 "Carrier"	
+25 "Jailer"	
+26 "Footmen"	
+27 "Guards"	
+28 "Citizens"
+
+*Edges  
+5 25
+5 6
+6 25
