@@ -100,3 +100,66 @@ plot(flo.biz,vertex.cex =(get.vertex.attribute(flo.biz,'wealth')/25),
      displaylabels = TRUE)
 
 
+
+friendmat <- read.csv('hr_data.csv',header = TRUE)
+head(friendmat)
+class(friendmat)
+
+friendmat <- as.matrix(friendmat)
+friendmat
+
+
+friendnet <- as.network(friendmat)
+par(mfrow=c(1,1))
+plot(friendnet,directed = TRUE,matrix.type = "adjacency")
+
+
+
+hr_attr <- read.csv("Hr_data_Main.csv",header = TRUE)
+sex <- hr_attr$Sex
+length(sex)
+
+dim(friendmat)
+
+names <- hr_attr$Name
+gender_vector <- vector()
+
+detach(package:sna)
+detach(package:network)
+
+library(igraph)
+
+friendgraph <- graph_from_adjacency_matrix(friendmat,weighted = TRUE)
+
+friendgraph
+
+for(i in 1:122){
+  for(j in 1:68){
+    
+    if (V(friendgraph)$name[i] == names[j]){
+      gender_vector[i] <- sex[j]
+      break;
+    }
+    else{
+      gender_vector[i] <-NA
+    }
+  }
+}
+
+head(gender_vector)
+length(gender_vector)
+
+friendgraph <- set_vertex_attr(friendgraph,'gender',value = c(gender_vector))
+
+colors <- ifelse(gender_vector == 1,"palevioletred",
+                 ifelse(gender_vector == 0, "royalblue2","gray"))
+colors
+
+par(mar= c(0,0,1,0),mfrow = c(1,1))
+
+plot(friendgraph,vertex.size = 6.5, vertex.color = colors,
+     edge.arrow.size = .2, edge.color = "black",
+     vertex.label = NA,main = "hr friendship network")
+
+
+
