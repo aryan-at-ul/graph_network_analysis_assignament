@@ -11,8 +11,8 @@ ethnicity <- drugpaj$partitions[[2]]
 kable(table(ethnicity), col.names=c("Ethnicity","Frequency"))
 
 png(filename="plots/simple_drug_user_plots.png")
-plot(drug)
-dev.off()
+#plot(drug)
+#dev.off()
 
 #story of high turn-over case study
 
@@ -160,6 +160,9 @@ par(mar= c(0,0,1,0),mfrow = c(1,1))
 plot(friendgraph,vertex.size = 6.5, vertex.color = colors,
      edge.arrow.size = .2, edge.color = "black",
      vertex.label = NA,main = "hr friendship network")
+
+#start of assignment
+load("hypertext.RData")
 
 
 
