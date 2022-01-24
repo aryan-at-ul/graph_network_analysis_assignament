@@ -12,6 +12,13 @@ print(node_names)
 
 
 gra <- graph.adjacency(adj, mode = "undirected")
+
+write_graph(
+  gra,
+  'exported-grpah.dot',
+  format = c("dot")
+)
+
 V(gra)$name <- node_names
 
 set.seed(128)
@@ -36,13 +43,17 @@ layout <- layout.auto(gra)
 plot(gra, vertex.label = NA, vertex.size = 5,layout = layout)
 
 n_nodes <- nrow(adj)
+n_nodes
 n_edges <- sum(adj)/2
+n_edges
 n_possible_edges <- n_nodes * (n_nodes-1) / 2
+n_possible_edges
 n_triangles <- sum(diag(adj %*% adj %*% adj)) / 6
 n_triangles
 p <- n_edges / n_possible_edges
 p
 degrees <- rowSums(adj)
+degrees
 degree_freqs <- table(degrees)
 plot(degree_freqs, type = "h", lwd = 4)
 
@@ -82,6 +93,7 @@ head(eigne_vec)
 
 plot(btw, type = "h", lwd = 4)
 plot(eigne_vec, type = "h", lwd = 3)
+plot(total_degree, type = "h", lwd = 4)
 
 central_table <- data.frame(total_degree,btw,eigne_vec)
 head(central_table)
@@ -141,7 +153,7 @@ er1.gof$pval.deg
 par(mflow=c(1,1))
 plot(er1.gof)
 
-#second erga model 
+#second erga model  dont run this
 er2 <- ergm(adj2~edges+triangle)
 
 
@@ -166,8 +178,8 @@ mycord <- cbind(x,y)
 library(RColorBrewer)
 
 
-par(mar=c(1,1,2,1))
-par(mfrow=c(2,2))
+#par(mar=c(1,1,2,1))
+#par(mfrow=c(2,2))
 
 plot(adj2,main="original network",coord = mycord,vertex.cex = 3,edge.col = 'azure4',
      vertex.col="#E41A1C",vertex.border='azure4',label=seq(1:20),label.pos=5,
@@ -236,8 +248,8 @@ K <- 4 # K = 3 and K = 4 also give very reasonable clustering solutions
 embedding <- eigen_dec$vectors[,1:K] # project the nodes into a low-dimensional latent space
 memberships <- kmeans(embedding, K, nstart = 100)$cluster # cluster the nodes
 plot(comp1, vertex.label = NA, vertex.size = 5, vertex.color = memberships, layout = layout)
-res <- make_clusters(adj, memberships)
-plot(x = res, y = adj, layout = layout, vertex.label = NA, vertex.size = 5)
+res <- make_clusters(gra, memberships)
+plot(x = res, y = gra, layout = layout, vertex.label = NA, vertex.size = 5)
 
 #remove it later
 library(lsa)
@@ -285,6 +297,7 @@ image(adj[order(hard_clustering),rev(order(hard_clustering))], xaxt = "n", yaxt 
 abline(a = 1, b=-1, lty = 2, col = 2)
 # highlight the blocks (very basic coding, it could be improved)
 group_counts <- (as.numeric(table(hard_clustering)))
+group_counts
 abline(v = cumsum(group_counts/sum(group_counts)))
 abline(h = 1-cumsum(group_counts/sum(group_counts)))
 
