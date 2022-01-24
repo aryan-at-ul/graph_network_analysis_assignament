@@ -39,8 +39,9 @@ n_nodes <- nrow(adj)
 n_edges <- sum(adj)/2
 n_possible_edges <- n_nodes * (n_nodes-1) / 2
 n_triangles <- sum(diag(adj %*% adj %*% adj)) / 6
+n_triangles
 p <- n_edges / n_possible_edges
-
+p
 degrees <- rowSums(adj)
 degree_freqs <- table(degrees)
 plot(degree_freqs, type = "h", lwd = 4)
@@ -64,6 +65,7 @@ detach(package:sna)
 library(igraph)
 
 largest_cliques(gra)  # 6 is the highest clique
+max_cliques(gra)
 
 #centrality , degree,closeness and betweenness,eigenvector,presitge(not valid here) 
 
@@ -73,17 +75,21 @@ head(total_degree)
 btw <- betweenness(gra)
 head(btw)
 
-aevcent <- evcent(gra)
-aevcent <- aevcent$vector
-head(aevcent)
+eigne_vec <- evcent(gra)
+eigne_vec <- eigne_vec$vector
+head(eigne_vec)
 
 
-plot(btw, type = "h", lwd = 3)
+plot(btw, type = "h", lwd = 4)
+plot(eigne_vec, type = "h", lwd = 3)
 
-central_table <- data.frame(total_degree,btw,aevcent)
+central_table <- data.frame(total_degree,btw,eigne_vec)
 head(central_table)
 
-cor(central_table)
+cr <- cor(central_table)
+library(corrplot)
+corrplot(cr, method = 'number')
+
 
 
 barplot(aevcent,names.arg = V(gra)$name)
@@ -101,9 +107,6 @@ plot(comp1,vertex.label = NA)
 
 pr_cent <- proper_centralities(comp1)
 
-
-
-
 comp1_central <- calculate_centralities(comp1,include = c(pr_cent[8],pr_cent[10],pr_cent[13],
                                                           pr_cent[15],pr_cent[21],pr_cent[46]))
 comp1_central
@@ -113,8 +116,109 @@ comp1_central <- as.data.frame(comp1_central)
 head(comp1_central)
 
 
-#social influence studies
+#exponential random graph modeles , parametric model of network
+library(ergm)
+library(sna)
+library(intergraph)
 
+
+
+adj2 <- asNetwork(gra)
+adj2
+
+er1 <- ergm(adj2~edges)
+summary(er1)
+
+invlogit <- function(x){ 1/ (1 + exp(-x))}
+x <- coef(er1)
+invlogit(x) # value same as network density???
+
+
+#goodness of fir
+er1.gof <- gof(er1~degree) 
+
+er1.gof$pval.deg
+par(mflow=c(1,1))
+plot(er1.gof)
+
+#second erga model 
+er2 <- ergm(adj2~edges+triangle)
+
+
+#network.density(adj2)
+library(NetCluster)
+library(sna)
+library(intergraph)
+library(igraph)
+
+orRule <- symmetrize(adj2,rule="weak")
+class(orRule)
+orRule <- network(symmetrize(adj2,rule="weak"),directed = FALSE)
+andRule <- network(symmetrize(adj2,rule="strong"),directed = FALSE)
+
+n <- network.size(adj2) 
+v1 <- sample((0:(n-1))/n)
+v2 <- sample(v1)
+x <- n/(2 * pi) * sin(2*pi*v1)
+y <- n/(2 * pi) * cos(2*pi*v1)
+
+mycord <- cbind(x,y)
+library(RColorBrewer)
+
+
+par(mar=c(1,1,2,1))
+par(mfrow=c(2,2))
+
+plot(adj2,main="original network",coord = mycord,vertex.cex = 3,edge.col = 'azure4',
+     vertex.col="#E41A1C",vertex.border='azure4',label=seq(1:20),label.pos=5,
+     label.cex= .5,label.col='gray15')
+
+plot(orRule,main="original network",coord = mycord,vertex.cex = 3,edge.col = 'azure4',
+     vertex.col="#E41A1C",vertex.border='azure4',label=seq(1:20),label.pos=5,
+     label.cex= .5,label.col='gray15')
+
+
+plot(orRule,main="and network",coord = mycord,vertex.cex = 3,edge.col = 'azure4',
+     vertex.col="#E41A1C",vertex.border='azure4',label=seq(1:20),label.pos=5,
+     label.cex= .5,label.col='gray15')
+
+
+plot(orRule, main = ' Symmetrized with OR Rule', coord=mycord, vertex.cex =3,edge.col='azure4', vertex.col="#377EB8", vertex.border='azure4', label=seq(1:20),label.pos=5,label.cex=.5,label.col='gray15')
+plot(andRule, main = ' Symmetrized with and Rule', coord=mycord, vertex.cex =3,edge.col='azure4', vertex.col="#377EB8", vertex.border='azure4', label=seq(1:20),label.pos=5,label.cex=.5,label.col='gray15')
+
+library(RColorBrewer) 
+#par(mar=c(1,1,1,1),mfrow=c(2,3)) 
+col11 <- brewer.pal(11, 'Set3')
+
+cols<-vector()
+
+
+eucdist <- dist(orRule, method="euclidian", diag=FALSE)
+thick <- as.vector(eucdist)
+#par(mar=c(0,0,0,0))
+
+plot(orRule,
+     vertex.cex =3, edge.col='pink', vertex.col=col11[5], vertex.border='azure4', label=seq(1:113),label.pos=5, label.cex=.5,label.col='gray15', edge.lwd = thick^2)
+
+
+Matrix_dist<-dist(adj2)
+Full_Cluster <- hclust(Matrix_dist)
+plot(Full_Cluster)
+dend <- as.dendrogram(Full_Cluster)
+plot(dend)
+
+
+bm <- blockmodel(adj2,Full_Cluster,k = 4,diag = FALSE)
+
+mem <- bm$block.membership
+mem
+
+heatmap(bm[[4]])
+Full_Cluster
+ct <- cutree(Full_Cluster, k = 4)
+class(ct)
+plot(gra, vertex.label = NA, vertex.size = 5, vertex.color = mem, layout = layout)
+#plot(gra, mark.groups = NULL, edge.color = NULL, gra, vertex.label = NA, vertex.size = 2.5*sqrt(rowSums(adj)), layout = layout)
 
 
 
@@ -128,15 +232,37 @@ adj <- as_adjacency_matrix(
 eigen_dec <- eigen(adj) # find eigenvalues and eigenvectors
 plot(eigen_dec$values, pch = 20) # make a decision on K
 abline(v=2)
-K <- 3 # K = 3 and K = 4 also give very reasonable clustering solutions
+K <- 4 # K = 3 and K = 4 also give very reasonable clustering solutions
 embedding <- eigen_dec$vectors[,1:K] # project the nodes into a low-dimensional latent space
 memberships <- kmeans(embedding, K, nstart = 100)$cluster # cluster the nodes
 plot(comp1, vertex.label = NA, vertex.size = 5, vertex.color = memberships, layout = layout)
-res <- make_clusters(comp1, memberships)
-plot(x = res, y = comp1, layout = layout, vertex.label = NA, vertex.size = 5)
+res <- make_clusters(adj, memberships)
+plot(x = res, y = adj, layout = layout, vertex.label = NA, vertex.size = 5)
+
+#remove it later
+library(lsa)
+coords = layout_with_fr(gra)
+c1 = cluster_fast_greedy(gra)
+modularity(c1)
+B = modularity_matrix(gra, membership(c1))
+plot(c1, gra,vertex.label = NA,layout=coords)
+plot(gra,vertex.label = NA ,vertex.color=membership(c1), layout=coords)
+plot_dendrogram(c1)
 
 
-### STOCHASTIC BLOCKMODELLING
+c2 <-  cluster_leading_eigen(gra)
+modularity(c2)
+plot(c2, gra,vertex.label = NA, layout=coords)
+
+
+c3 = cluster_edge_betweenness(gra)
+modularity(c3)
+plot(c3, gra,vertex.label = NA,layout=coords)
+
+
+
+#
+## STOCHASTIC BLOCKMODELLING
 library(blockmodels) # this package uses S4 classes
 sbm <- BM_bernoulli(membership_type = "SBM_sym", # data type
                     adj = adj, # adjacency matrix
@@ -174,7 +300,8 @@ colSums(soft_clustering) / sum(colSums(soft_clustering))
 table(hard_clustering) / n_nodes
 
 # 2
-sbm$model_parameters[[K_star]]$pi[1,2]
+sbm$model_parameters[[K_star]]$pi[1,4]
+sbm$model_parameters[[K_star]]$pi[2,3] #2,3 has greater chances 
 
 # 3
 sbm$plot_parameters(K_star)# group 1 and 2 exhibit a clear community structure
@@ -187,6 +314,8 @@ lambda %*% sbm$model_parameters[[K_star]]$pi # group number 2 has more connectio
 n_nodes * lambda %*% sbm$model_parameters[[K_star]]$pi # around 25
 
 # 6
+memberships
+hard_clustering
 table(memberships, hard_clustering)
 # the groups with community structure are similar in both partitions, the group of hubs is where the partitions are fundamentally different
 
