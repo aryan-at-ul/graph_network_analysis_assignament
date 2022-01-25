@@ -35,8 +35,8 @@ ncol(adj)
 X <- length(V(gra))
   
 
-#layout <- layout.fruchterman.reingold(gra)
-layout <- layout.auto(gra)
+layout <- layout.fruchterman.reingold(gra)
+#layout <- layout.auto(gra)
 
 
 #colors <- c(paste0(rep("grey",X),seq(X,1)))
@@ -212,22 +212,53 @@ thick <- as.vector(eucdist)
 plot(orRule,
      vertex.cex =3, edge.col='pink', vertex.col=col11[5], vertex.border='azure4', label=seq(1:113),label.pos=5, label.cex=.5,label.col='gray15', edge.lwd = thick^2)
 
-
+library("ape")
+#http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
 Matrix_dist<-dist(adj2)
+Matrix_dist
 Full_Cluster <- hclust(Matrix_dist)
-plot(Full_Cluster)
+plot(Full_Cluster, hang = -1, cex = 0.6)
+nodePar <- list(lab.cex = 0.6, pch = c(NA, 19), 
+                cex = 0.7, col = "blue")
+# Customized plot; remove labels
+plot(as.phylo(Full_Cluster), cex = 0.6, label.offset = 0.5)
+plot(as.phylo(Full_Cluster), type = "fan")
+
+colors = c("red", "blue", "green", "black")
+clus4 = cutree(Full_Cluster, 4)
+plot(as.phylo(Full_Cluster), type = "fan", tip.color = colors[clus4],
+     label.offset = 1, cex = 0.7)
+
+library(dendextend)
+library(ggplot2)
 dend <- as.dendrogram(Full_Cluster)
 plot(dend)
 
+ggd1 <- as.ggdend(dend)
+ggplot(ggd1) 
 
-bm <- blockmodel(adj2,Full_Cluster,k = 4,diag = FALSE)
+dend %>% set("branches_k_color", k = 4) %>% 
+  plot(main = "Default colors")
+
+ggplot(ggd1, theme = theme_minimal()) 
+
+ggplot(ggd1, labels = FALSE) + 
+  scale_y_reverse(expand = c(0.2, 0)) +
+  coord_polar(theta="x")
+
+
+
+
+
+#
+bm <- blockmodel(adj2,Full_Cluster,k = 5,diag = FALSE)
 
 mem <- bm$block.membership
 mem
 
 heatmap(bm[[4]])
 Full_Cluster
-ct <- cutree(Full_Cluster, k = 4)
+ct <- cutree(Full_Cluster, k = 5)
 class(ct)
 plot(gra, vertex.label = NA, vertex.size = 5, vertex.color = mem, layout = layout)
 #plot(gra, mark.groups = NULL, edge.color = NULL, gra, vertex.label = NA, vertex.size = 2.5*sqrt(rowSums(adj)), layout = layout)
@@ -243,15 +274,29 @@ adj <- as_adjacency_matrix(
 
 eigen_dec <- eigen(adj) # find eigenvalues and eigenvectors
 plot(eigen_dec$values, pch = 20) # make a decision on K
-abline(v=2)
-K <- 4 # K = 3 and K = 4 also give very reasonable clustering solutions
+abline(v=4)
+K <-  # K = 3 and K = 4 also give very reasonable clustering solutions
 embedding <- eigen_dec$vectors[,1:K] # project the nodes into a low-dimensional latent space
 memberships <- kmeans(embedding, K, nstart = 100)$cluster # cluster the nodes
-plot(comp1, vertex.label = NA, vertex.size = 5, vertex.color = memberships, layout = layout)
+memberships
+plot(gra, vertex.label = NA, vertex.color = memberships, layout = layout,vertex.size = 2.5*sqrt(rowSums(adj)))
 res <- make_clusters(gra, memberships)
+layout2 <- layout_with_kk(gra)
 plot(x = res, y = gra, layout = layout, vertex.label = NA, vertex.size = 5)
 
 #remove it later
+Stretch = 6
+LO_F5 = Stretch*layout.circle(gra)
+plot(gra, layout=LO_F5)
+
+co <- cluster_fast_greedy(gra)
+plot(co, gra, main="Cluster Optimal Communities",vertex.label = NA)
+
+
+
+
+
+#important below but not for sunmisssion
 library(lsa)
 coords = layout_with_fr(gra)
 c1 = cluster_fast_greedy(gra)
@@ -280,7 +325,7 @@ sbm <- BM_bernoulli(membership_type = "SBM_sym", # data type
                     adj = adj, # adjacency matrix
                     verbosity = 1, # how much should be printed out while running the algorithm
                     plotting="", # could be used to show how the values of the ICL evolve during the estimation
-                    explore_max = 4) # maximum number of clusters to consider
+                    explore_max = 5) # maximum number of clusters to consider
 
 sbm$estimate() # this line runs the VEM on the dataset
 K_star <- which.max(sbm$ICL) # extract the best model according to ICL values
@@ -303,6 +348,8 @@ abline(h = 1-cumsum(group_counts/sum(group_counts)))
 
 memberships_sbm <- make_clusters(gra, hard_clustering) # create the new communities object according to partition found
 plot(memberships_sbm, mark.groups = NULL, edge.color = NULL, gra, vertex.label = NA, vertex.size = 2.5*sqrt(rowSums(adj)), layout = layout)
+legend("topright", c("group 1","group 2","group 3","group 4","group 5"), pch = 20, cex = 1, pt.cex = 2, col = categorical_pal(8)[1:5])
+
 
 
 ## End of lecture exercises (sketch of solutions)
@@ -311,17 +358,19 @@ plot(memberships_sbm, mark.groups = NULL, edge.color = NULL, gra, vertex.label =
 # the package does not return the estimated lambdas. We can estimate them in two ways
 colSums(soft_clustering) / sum(colSums(soft_clustering))
 table(hard_clustering) / n_nodes
+table(hard_clustering)
 
 # 2
 sbm$model_parameters[[K_star]]$pi[1,4]
 sbm$model_parameters[[K_star]]$pi[2,3] #2,3 has greater chances 
-
+sbm$model_parameters[[K_star]]$pi[2,4]
+sbm$model_parameters[[K_star]]$pi[3,4]
 # 3
-sbm$plot_parameters(K_star)# group 1 and 2 exhibit a clear community structure
+sbm$plot_parameters(K_star)# group 3 and 3 exhibit a clear community structure
 
 # 4
 lambda <- colSums(soft_clustering) / sum(colSums(soft_clustering))
-lambda %*% sbm$model_parameters[[K_star]]$pi # group number 2 has more connections
+lambda %*% sbm$model_parameters[[K_star]]$pi # group number 3 has more connections
 
 # 5
 n_nodes * lambda %*% sbm$model_parameters[[K_star]]$pi # around 25
