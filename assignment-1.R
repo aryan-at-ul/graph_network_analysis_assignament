@@ -325,7 +325,7 @@ sbm <- BM_bernoulli(membership_type = "SBM_sym", # data type
                     adj = adj, # adjacency matrix
                     verbosity = 1, # how much should be printed out while running the algorithm
                     plotting="", # could be used to show how the values of the ICL evolve during the estimation
-                    explore_max = 5) # maximum number of clusters to consider
+                    explore_max = 4) # maximum number of clusters to consider
 
 sbm$estimate() # this line runs the VEM on the dataset
 K_star <- which.max(sbm$ICL) # extract the best model according to ICL values
@@ -348,7 +348,7 @@ abline(h = 1-cumsum(group_counts/sum(group_counts)))
 
 memberships_sbm <- make_clusters(gra, hard_clustering) # create the new communities object according to partition found
 plot(memberships_sbm, mark.groups = NULL, edge.color = NULL, gra, vertex.label = NA, vertex.size = 2.5*sqrt(rowSums(adj)), layout = layout)
-legend("topright", c("group 1","group 2","group 3","group 4","group 5"), pch = 20, cex = 1, pt.cex = 2, col = categorical_pal(8)[1:5])
+legend("topright", c("group 1","group 2","group 3","group 4"), pch = 20, cex = 1, pt.cex = 2, col = categorical_pal(8)[1:5])
 
 
 
@@ -361,9 +361,14 @@ table(hard_clustering) / n_nodes
 table(hard_clustering)
 
 # 2
+sbm$model_parameters[[K_star]]$pi[1,2]
+sbm$model_parameters[[K_star]]$pi[1,3]
 sbm$model_parameters[[K_star]]$pi[1,4]
-sbm$model_parameters[[K_star]]$pi[2,3] #2,3 has greater chances 
+sbm$model_parameters[[K_star]]$pi[2,1] #2,3 has greater chances 
+sbm$model_parameters[[K_star]]$pi[2,3]
 sbm$model_parameters[[K_star]]$pi[2,4]
+sbm$model_parameters[[K_star]]$pi[3,1]
+sbm$model_parameters[[K_star]]$pi[3,2]
 sbm$model_parameters[[K_star]]$pi[3,4]
 # 3
 sbm$plot_parameters(K_star)# group 3 and 3 exhibit a clear community structure
